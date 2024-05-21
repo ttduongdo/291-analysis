@@ -1,0 +1,261 @@
+---
+title: "Deciphering Global Unemployment: What Economic Factors Determine Unemployment Rate?"
+author: "Group A-Lucia Qin, Rainbow Gu, Robbie Do"
+date: "12/19/2023"
+format: pdf
+editor: visual
+bibliography: refs.bib
+csl: apa.csl
+---
+
+```{r,include=FALSE}
+# load packages
+library(tidyverse)
+library(stargazer) 
+library(reader)
+library(dplyr)
+library(leaps)
+library(car)
+library(HH)
+library(GGally)
+library(ggplot2)
+# Read Dataset
+merge <- read.csv("merged_dataset.csv")
+```
+
+# Abstract
+
+This study delves into the intricate relationship between global unemployment rates in 2017 and a range of economic characteristics in 114 countries in 2016. The indicators include the Economic Freedom Index, population growth, tech-manufacturing revenues, percentage of female in the labor force, inflation rates, whether the country is developed/developing and whether it enforces policies on maternity leave. Our findings reveal a significant negative association between unemployment rates and the Economic Freedom Index score, population growth, and tech-manufacturing revenues. This contributes valuable insights into the factors influencing global unemployment rates and underscores the relevance of economic freedom and key economic indicators in shaping labor market outcomes on a global scale.
+
+# Background
+
+The dynamics between worldwide unemployment rates and economic characteristics have been a subject of considerable scholarly inquiry. Multiple previous studies from varying times, such as researches by @heller2014economic and @cervello2023economic, suggested that economic freedom is associated with lower unemployment rates and higher labor force participation. Similarly, @schonberg2014expansions contributed to this body of knowledge by highlighting the negative impact of maternity leave coverage on post-birth employment rates, as evidenced in Germany. In Nigeria, population growth and exchange rate are believed to impact positively on unemployment [@maijama2019impact]. A comprehensive review by @lima2021technological on technological unemployment emphasizes the diverse causes and consequences of unemployment in the era of automation. On the other hand, a study in Sri Lanka by Niroshanth (2021) found no significant relationship between high-tech exports and unemployment on a global scale [@niroshanthanalysis]. Our study draws significant inspiration from these prior investigations.
+
+Moreover, in light of the limited scope and the outdated data resources of existing studies, our research aims to contribute to a more recent understanding of the factors influencing unemployment rates on a global scale. We anticipate that economic freedom, population growth, and tech-manufacturing revenues will have a significant influence on global unemployment rates, aligning with the findings of previous studies. By delving into these economic characteristics, we aim to provide valuable insights for policymakers, researchers, and practitioners striving to formulate effective strategies for mitigating unemployment and fostering sustainable economic development. Our research question revolves around identifying and analyzing the indicators that wield the most significant influence on global unemployment rates, thus contributing to the ongoing discourse on this critical global issue.
+
+## Hypotheses
+
+**Hypothesis 1**: Countries with higher EFI have lower unemployment rates.
+
+**Hypothesis 2**: Countries with higher population growth, higher annual medium and high tech manufactures have higher unemployment rates.
+
+# Methodology
+
+## Data
+
+Our study draws upon a finalized data set encompassing 114 countries, excluding N/A observations from 135 countries that are mainly from the Global South and much less populated. Each unit represents a country worldwide, reflecting the global population in the year 2016. The observational data spans the year 2017 for the dependent variable---Unemployment Rate (%), while independent variables are collected from 2016 in recognizing the lagged effect.
+
+## Variables
+
+The dependent variable is the unemployment rate, measured in 2017 and treated as a lagged term, sourced from the SDG Labour Market Indicators provided by the International Labour Organization (ILOSDG)[@unempdata].
+
+Our independent variables include the Economic Freedom Index (EFI)[@EFIdata], population growth rates (annual %)[@popgrowthdata], medium & high-tech manufacture value added (% of manufactured exports)[@techmanudata], percentage of female labor force (%)[@femlabordata], the presence of maternity leave (binary)[@matdata], inflation rate[@inflationdata], country's development classification (binary)[@countryclass]
+
+In transforming the inflation rate, we converted it into a binary indicator that signifies whether a country experiences a high inflation rate based on a 5% benchmark [@investopedia_hyperinflation]. Additionally, we classified countries into developed and developing categories to create another binary indicator[@countryclass]. This comprehensive set of variables enables us to delve into the intricate relationship between economic freedom and various labor market conditions. We examined the range of each independent variable, and the results are presented in Appendix 1.
+
+After conducting a thorough precondition check, we applied a logarithmic transformation to the variable "Medium & High-Tech Manufacture Value Added" (`logmanu`) and the percentage of the female labor force (`loglabor`).
+
+## Method
+
+```{r, include=FALSE}
+model1 <- lm(unemp ~ efi+pop+logmanu+loglabor+as.factor(mat)+as.factor(inflation_category)+as.factor(country_develop), data = merge, x = TRUE) 
+
+model2 <- lm(unemp ~ efi+pop+logmanu+as.factor(inflation_category), data = merge)
+
+model3 <- lm(unemp ~ efi+pop+logmanu+as.factor(inflation_category)+efi*logmanu, data = merge)
+```
+
+Our initial step involved constructing a comprehensive model that examined the relationship between the dependent variable (unemployment rate) and all independent variables. This model successfully passed the Variance Inflation Factor (VIF) test, with coefficients consistently below 5.
+
+Subsequently, leveraging the HH package, we identified ann optimal model which best adheres to the principle of parsimony. The selected model encompassed economic freedom (`efi`), population growth (`pop`), log-transformed medium & high-tech manufacture value added (`logmanu`), and inflation category, demonstrating a modest Mallow's Cp and a substantial adjusted R-squared. Hence, we designated this model as our reduced model.
+
+Post the thorough examination of the dataset, we constructed a covariance matrix to pinpoint numeric explanatory variables strongly correlated with each other (refer to Appendix 2). We selectively focused on the first five pairs of explanatory variables exhibiting substantial correlation coefficients:
+
+1.  Country Development vs. EFI (0.602\*\*\*)
+2.  Inflation Category vs. EFI (-0.467\*\*\*)
+3.  Country Development vs. Logmanu (0.421\*\*\*)
+4.  Loglabor vs. Pop (-0.369\*\*\*)
+5.  EFI vs. Logmanu (0.289\*\*\*)
+
+Systematically, we introduced interactions to the reduced model, systematically comparing models based on their Akaike Information Criterion (AIC) (refer to Appendix 3). Subsequent to the evaluation, we chose the reduced model featuring an interaction between the Economic Freedom Index score (`efi`) and the logged Medium & High-Tech Manufacture Value Added (`logmanu`).
+
+# Results
+
+## Model 1: Full model
+
+The first model, which includes Economic Freedom Index (`efi`), Population Growth (`pop`), log-transformed Medium & High-Tech Manufacture Value Added (`logmanu`), log-transformed Female Labor Force (`loglabor`), Maternity Leave (mat), Inflation Category (`inflation_category`), and Country Development (`country_develop`) as predictors, indicates that there are significant negative relationships between unemployment rate and independent variables population growth and log-transformed medium & high-tech manufacture value added. Economic freedom, log-transformed female labor force, inflation category, and country development predictors do not seem to have a statistical significant relationship with unemployment.
+
+Below are the interpretations of significant coefficients:
+
+**Population Growth (`pop`)**: The coefficient of $-1.127$ indicates that, holding other variables constant, a one-unit increase in Population Growth is associated with a decrease of approximately $1.127$ percent in the Unemployment Rate on average. This effect is statistically significant $(p < 0.001)$, suggesting a meaningful impact on unemployment.
+
+**Log-transformed Medium & High-Tech Manufacture Value Added (`logmanu`)**: The coefficient of $-1.133$ suggests that, holding other variables constant, a one-unit increase in log-transformed Medium & High-Tech Manufacture Value Added is associated with a decrease of approximately $1.133$ percent in the Unemployment Rate on average. This effect is statistically significant $(p < 0.05)$.
+
+This model has an adjusted R-squared of $0.085$, suggesting that taken into account of the number of independent variables added, $8.5$% of the variance in unemployment rate is explained by this model.
+
+## Model 2: Reduced Model
+
+The reduced model includes Economic Freedom Index (`efi`), Population Growth (`pop`), log-transformed Medium & High-Tech Manufacture Value Added (`logmanu`), and Inflation Category (`inflation_category`). As shown in the table, there are significant negative associations between unemployment rate and population growth. Both the relationship between unemployment rate and inflation category and log-transformed Medium & High-Tech Manufacture Value Added is not statistically significant in this model.
+
+Below are the interpretations for the significant variables:
+
+**Population Growth (`pop`)**: The coefficient of $-1.033$ indicates that, holding other variables constant, a one-unit increase in Population Growth is associated with a decrease of approximately $1.033$ percent in the Unemployment Rate on average. This effect remains statistically significant $(p < 0.001)$.
+
+Compared to the first model which is the full model, this model has a slightly bigger adjusted R-squared of $0.097$, which suggests that this model has a slightly greater explanatory power in explaining unemployment rate than the first model.
+
+## Model 3: Model with Interaction
+
+Based on the reduced model (model2), the third model introduces an interaction term between Economic Freedom Index (`efi`) and log-transformed Medium & High-Tech Manufacture Value Added (`logmanu`). As shown in the table, there is a significant negative relationship between unemployment rate and economic freedom index, population growth, and log-transformed medium & high-tech manufacture value added. The relationship between unemployment rate and inflation category is not statistically significant in this model. The interaction between economic freedom index and log-transformed medium & high-tech manufacture value added is not significantly correlated with unemployment rate.
+
+Below are the interpretations for the significant variables:
+
+**Economic Freedom Index (`efi`)**: The coefficient of $-3.531$ suggests that, holding other variables constant, a one-unit increase in the Economic Freedom Index is associated with a decrease of approximately $3.531$ percent in the Unemployment Rate on average. This effect is statistically significant $(p < 0.05)$.
+
+**Population Growth (`pop`)**: The coefficient of $-1.100$ indicates that, holding other variables constant, a one-unit increase in Population Growth is associated with a decrease of approximately $1.100$ percent in the Unemployment Rate on average. This effect remains statistically significant $(p < 0.001)$.
+
+**Log-transformed Medium & High-Tech Manufacture Value Added (`logmanu`)**: The coefficient of $-7.295$ suggests that, holding other variables constant, a one-unit increase in log-transformed Medium & High-Tech Manufacture Value Added is associated with a decrease of approximately $7.295$ percent in the Unemployment Rate on average. This effect is statistically significant $(p < 0.05)$.
+
+```{r, echo = F, results = 'asis'}
+stargazer(model1, model2, model3, type = "latex",
+					title ="Model Analysis",
+					covariate.labels = c("economic freedom index","population growth","logmanu","loglabor","maternity leave","inflation category","country development"),
+					dep.var.labels = ("unemployment rate"),
+          header=F)
+```
+
+```{r, echo=FALSE}
+# Predicted graph with efi
+newdata_efi <- with(merge, data.frame(efi=2:9, pop=mean(pop), logmanu=mean(logmanu), inflation_category = "0"))
+
+pred <- as.data.frame(predict(model2, newdata_efi, type="response", se.fit=TRUE))
+newdata_efi$pred_prob <- pred$fit
+newdata_efi$pred_lower <- pred$fit-(1.96*pred$se.fit)
+newdata_efi$pred_upper <- pred$fit+(1.96*pred$se.fit)
+
+ggplot(newdata_efi, aes(x=efi, y=pred_prob))+
+geom_ribbon(aes(ymin = pred_lower, ymax = pred_upper),
+            fill = "#D8BFD8") +
+  geom_line() + 
+  labs(title = "Predicted Unemployment rate base on Economic Freedom Index",
+       x = "Economic Freedom Index",
+       y = "Predicted Unemployment Rate") + 
+  theme_minimal() +
+  theme(plot.title = element_text(size = 12))
+```
+
+As depicted in this prediction graph, while setting population and log-transformed medium & high-tech manufacture value added to their mean values, and considering only countries with low inflation, a negative relationship emerges between the predicted unemployment rate and the Economic Freedom Index. This observation is consistent with our initial hypothesis (Hypothesis 1).
+
+```{r, echo=FALSE}
+newdata_pop <- with(merge, data.frame(efi=mean(efi), pop=(-2:8), logmanu=mean(logmanu), inflation_category = "0"))
+
+pred <- as.data.frame(predict(model2, newdata_pop, type="response", se.fit=TRUE))
+newdata_pop$pred_prob <- pred$fit
+newdata_pop$pred_lower <- pred$fit-(1.96*pred$se.fit)
+newdata_pop$pred_upper <- pred$fit+(1.96*pred$se.fit)
+
+ggplot(newdata_pop, aes(x=pop, y=pred_prob))+
+geom_ribbon(aes(ymin = pred_lower, ymax = pred_upper),
+            fill = "#D8BFD8") +
+  geom_line() + 
+  labs(title = "Predicted Unemployment rate base on Population Growth",
+       x = "Population Growth",
+       y = "Predicted Unemployment Rate") + 
+  theme_minimal() +
+  theme(plot.title = element_text(size = 12))
+```
+
+As depicted in this prediction graph, while setting economic freedom index and log-transformed medium & high-tech manufacture value added to their mean values, and considering only countries with low inflation, a negative relationship emerges between the predicted unemployment rate and population growth. This observation is inconsistent with our second hypothesis (Hypothesis 2).
+
+```{r, echo=FALSE}
+newdata_manu <- with(merge, data.frame(efi=mean(efi), pop=mean(pop), 
+                        logmanu=(-1.4:4.5), inflation_category = "0"))
+
+pred <- as.data.frame(predict(model2, newdata_manu, type="response", se.fit=TRUE))
+newdata_manu$pred_prob <- pred$fit
+newdata_manu$pred_lower <- pred$fit-(1.96*pred$se.fit)
+newdata_manu$pred_upper <- pred$fit+(1.96*pred$se.fit)
+
+ggplot(newdata_manu, aes(x=logmanu, y=pred_prob))+
+geom_ribbon(aes(ymin = pred_lower, ymax = pred_upper),fill = "#D8BFD8")+
+  geom_line() + 
+  labs(title = "Predicted Unemployment rate base on Tech Manufacture",
+       x = "log-transformed Medium & High-Tech Manufacture Value Added",
+       y = "Predicted Unemployment Rate") +
+  theme_minimal() +
+  theme(plot.title = element_text(size = 12))
+```
+
+As depicted in this prediction graph, while setting economic freedom index and population growth to their mean values, and considering only countries with low inflation, a negative relationship emerges between the predicted unemployment rate and log-transformed medium & high-tech manufacture value added. This observation is also inconsistent with our second hypothesis (Hypothesis 2).
+
+# Conclusion
+
+In conclusion, our study sheds light on the complex interplay between global unemployment rates and various economic characteristics across 114 countries in 2016. Our findings reveal significant negative associations between unemployment rates and the Economic Freedom Index (EFI) score, which aligns with our original hypothesis, affirming the importance of economic freedom in influencing labor market outcomes.
+
+Our study also shows that there is significant negative relationship between unemployment rate and population growth as well as tech-manufacturing revenues, which is different from what we hypothesized. Studies have shown that in Bangladesh, population growth is stable over time and the growth of economy is increasing over time that reduces the unemployment rate of the country @alam2020impact, which might be one explanation for the negative relationship between unemployment rate and population growth.
+
+While our study contributes valuable insights, it is essential to acknowledge its limitations. The observational nature of the data restricts us from establishing causal relationships, emphasizing the need for caution in interpreting associations. Additionally, the study's reliance on 2016 data may not capture more recent economic developments, especially during the post-COVID era. Besides, the scope of our findings is specific to the selected indicators, and other factors influencing unemployment rates may exist beyond the variables considered. For example, research shows that quantitative literacy skills play a significant role in increasing the probability of full-time employment @rivera1992quantitative, suggesting that education would also affect unemployment rate. Policymakers and researchers should be cautious in applying these findings and recognize that our study does not account for the nuanced complexities of individual country contexts.
+
+In essence, our research contributes a contemporary perspective to the ongoing discourse on global unemployment, providing a foundation for further investigations into the multifaceted determinants of labor market dynamics worldwide.
+
+# Appendix
+
+```{r appendix1, echo=FALSE}
+summary_data <- merge[c("pop", "Country.Code", "tech_manu", "efi", "mat", "female_labor", "inflation_rt", "unemp", "logmanu", "loglabor", "loginflation", "inflation_category", "country_develop")]
+
+stargazer(summary_data, type = "text", title = "Appendix 1")
+```
+
+```{r appendix2, echo=FALSE}
+# Process to derive final regression-bivariate regression
+test_data <- merge[c("unemp", "efi", "pop", "logmanu", "loglabor", "mat", "inflation_category", "country_develop")]
+pairs_plot<- ggpairs(test_data)
+pairs_plot <- pairs_plot + ggtitle("Appendix 2")
+print(pairs_plot)
+```
+
+```{r appendix3, echo=FALSE}
+interaction_models <- list()
+
+# 1. country_development Vs. efi
+interaction_models$model1 <- lm(unemp ~ efi + pop + logmanu + efi * country_develop, data = merge)
+
+# 2. inflation_category Vs. efi
+interaction_models$model2 <- lm(unemp ~ efi + pop + logmanu + efi * inflation_category, data = merge)
+
+# 3. country_development Vs. logmanu
+interaction_models$model3 <- lm(unemp ~ efi + pop + logmanu + logmanu * country_develop, data = merge)
+
+# 4. loglabor Vs. pop
+interaction_models$model4 <- lm(unemp ~ efi + pop + logmanu + loglabor * pop, data = merge)
+
+# 5. efi Vs. logmanu
+interaction_models$model5 <- lm(unemp ~ efi + pop + logmanu + efi * logmanu, data = merge)
+
+# Compare models using AIC
+compare_models_results <- sapply(interaction_models, function(model) AIC(model))
+
+# Display AIC values
+cat("Appendix 3 - AIC Values for Interaction Models:\n")
+print(compare_models_results)
+```
+
+#### Appendix 4 - Histograms to check Linearity Condition and whether to transform
+
+```{r appendix4, echo = F, warning = F, message = F}
+# PreCondition Checks
+ggplot(merge, aes(x = unemp)) + geom_histogram() + labs(title = "Linearity Check for Dependent Variable", x = "Unemployment Rate")
+ggplot(merge, 
+       aes(x=log(tech_manu)))+ 
+  geom_histogram() + labs(title = "Linearity Check for Independent Variable", x = "Medium and High Technology Manufacturing Values Added in Percentage")
+ggplot(merge, aes(x=pop))+ geom_histogram() + labs(title = "Linearity Check for Independent Variable", x = "Population Growth in Percentage")
+ggplot(merge, aes(x=efi))+ geom_histogram() + labs(title = "Linearity Check for Independent Variable", x = "Economic Freedom Index")
+ggplot(merge, aes(x=log(female_labor)))+ geom_histogram() + labs(title = "Linearity Check for Independent Variable", x = "Percentage of Female Labor Force")
+```
+
+# Citations
+
+```{=tex}
+\setlength{\parindent}{-0.2in}
+\setlength{\leftskip}{0.2in}
+\setlength{\parskip}{8pt}
+```

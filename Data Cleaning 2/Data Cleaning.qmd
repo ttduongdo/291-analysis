@@ -1,0 +1,138 @@
+---
+title: "Data Cleaning"
+format: html
+editor: visual
+---
+
+```{r, include = F}
+# load packages 
+library(tidyverse)
+library(stargazer) 
+library(reader)
+library(dplyr)
+library(leaps)
+library(car)
+library(HH)
+library(GGally)
+library(ggplot2)
+```
+
+```{r}
+# Merge datasets
+# Reading in and saving the data
+hfi <- read.csv("./hfi_cc_2021.csv")
+emp <- read.csv("./unemp.csv")
+maternity_leave <- read.csv("./maternity_leave.csv")
+tech_manu <- read.csv("./tech_manufac.csv")
+pop_growth <- read.csv("./Population_Growth.csv")
+inflation_rt <- read_csv("inflation_rt.csv", skip = 4)
+female_labor <- read.csv("./female_labor.csv", skip = 4)
+
+#select columns
+efi <- hfi |>
+  filter(year == "2016")
+efi <- efi[c("ISO", "ef_score")]
+
+unemp <- emp[c("X2017", "Country.Code")]
+
+maternity_leave <- maternity_leave[c("mtlv_any2016", "ISO3")]
+tech_manu <- tech_manu[c("X2016", "Country.Code")]
+pop_growth <- pop_growth[c("X2016", "Country.Code")]
+inflation_rt <- inflation_rt[c("2016", "Country Code")]
+female_labor <- female_labor[c("X2016", "Country.Code")]
+
+#change column names
+colnames(emp)[1] = "unemp"
+colnames(emp)[2] = "Country.Code"
+
+colnames(tech_manu)[1] = "tech_manu"
+
+colnames(pop_growth)[1] = "pop"
+
+colnames(maternity_leave)[1] = "mat"
+colnames(maternity_leave)[2] = "Country.Code"
+
+colnames(female_labor)[1] = "female_labor"
+
+colnames(efi)[2] = "efi"
+colnames(efi)[1] = "Country.Code"
+
+colnames(inflation_rt)[1] = "inflation_rt"
+colnames(inflation_rt)[2] = "Country.Code"
+
+colnames(unemp)[1] = "unemp"
+colnames(unemp)[2] = "Country.Code"
+
+# merge
+# merge <- inner_join(x = emp, y = pop_growth, by = c("Country.Code"))
+merge <- inner_join(x = pop_growth, y = tech_manu, by = c("Country.Code"))
+merge <- inner_join(x = merge, y = efi, by = c("Country.Code"))
+merge <- inner_join(x = merge, y = maternity_leave, by = c("Country.Code"))
+merge <- inner_join(x = merge, y = female_labor, by = c("Country.Code"))
+merge <- inner_join(x = merge, y = inflation_rt, by = c("Country.Code"))
+merge <- inner_join(x = merge, y = unemp, by = c("Country.Code"))
+```
+
+```{r, include=FALSE}
+# PreCondition Checks
+ggplot(merge, aes(x = unemp)) + geom_histogram() 
+ggplot(merge, 
+       aes(x=log(tech_manu)))+ 
+  geom_histogram() 
+ggplot(merge, aes(x=pop))+ geom_histogram() 
+ggplot(merge, aes(x=efi))+ geom_histogram() 
+ggplot(merge, aes(x=log(female_labor)))+ geom_histogram() 
+ggplot(merge, aes(x=inflation_rt))+ geom_histogram() 
+```
+
+```{r, include=FALSE}
+# log transformation
+merge <- merge |>
+  mutate(logmanu = log(tech_manu))
+
+merge <- merge |>
+  mutate(loglabor = log(female_labor))
+
+merge <- merge |>
+  mutate(loginflation = log(inflation_rt))
+
+# ommited binary variable
+```
+
+```{r}
+# Add binary indicator of inflation rate
+merge <- merge |>
+  mutate(inflation_category = ifelse(inflation_rt >= 5, 1, 0))
+```
+
+```{r}
+# Adding binary indicator "country development"
+developing_countries <- c(
+  "DZA", "EGY", "LBY", "MRT", "MAR", "SDN", "TUN", "AGO", "BWA", "LSO",
+  "MWI", "MUS", "MOZ", "NAM", "ZAF", "ZMB", "ZWE", "BRN", "CHN", "HKG",
+  "IDN", "MYS", "MMR", "PNG", "PHL", "KOR", "SGP", "TWN", "THA", "VNM",
+  "BRB", "CUB", "DOM", "GUY", "HTI", "JAM", "TTO", "MEX", "CRI", "SLV",
+  "GTM", "HND", "NIC", "PAN", "CMR", "CAF", "TCD", "COG", "GNQ", "GAB",
+  "STP", "BEN", "BFA", "CPV", "CIV", "GMB", "GHA", "GIN", "GNB", "LBR",
+  "MLI", "NER", "NGA", "SEN", "SLE", "TGO", "BGD", "IND", "IRN", "NPL",
+  "PAK", "LKA", "BDI", "COM", "COD", "DJI", "ERI", "ETH", "KEN", "MDG",
+  "RWA", "SOM", "UGA", "TZA", "ARG", "BOL", "BRA", "CHL", "COL", "ECU",
+  "PRY", "PER", "URY", "VEN", "BHR", "IRQ", "ISR", "JOR", "KWT", "LBN",
+  "OMN", "QAT", "SAU", "SYR", "TUR", "ARE", "YEM")
+
+merge <- merge |> mutate(country_develop = ifelse(Country.Code %in% c("AUT", "BEL", "DNK", "FIN", "FRA", "DEU", "GRC", "IRL", "ITA", "LUX", "NLD", "PRT", "ESP", "SWE", "GBR", "BGR", "HRV", "CYP", "CZE", "EST", "HUN", "LVA", "LTU", "MLT", "POL", "ROU", "SVK", "SVN", "ISL", "NOR", "CHE", "AUS", "CAN", "JPN", "NZL", "USA"), 1, 0))
+
+# Developed countries: type = 1
+# Developing countries: type = 0
+```
+
+```{r}
+# Drop N/A values
+merge <- merge |>
+  na.omit()
+```
+
+```{r}
+# Export to another dataset
+write.csv(merge, file = "merged_dataset.csv", row.names = FALSE)
+```
